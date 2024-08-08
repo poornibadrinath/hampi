@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Show and Hide Layers with Directions using Leaflet</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <!-- Leaflet Control Geocoder CSS (optional) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #menu {
+            background: #fff;
+            position: absolute;
+            z-index: 1;
+            top: 10px;
+            right: 10px;
+            border-radius: 3px;
+            width: 120px;
+            border: 1px solid rgba(0, 0, 0, 0.4);
+            font-family: 'Open Sans', sans-serif;
+        }
+        #menu a {
+            font-size: 13px;
+            color: #404040;
+            display: block;
+            margin: 0;
+            padding: 0;
+            padding: 10px;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+        #menu a:last-child {
+            border: none;
+        }
+        #menu a:hover {
+            background-color: #f8f8f8;
+            color: #404040;
+        }
+        #menu a.active {
+            background-color: #3887be;
+            color: #ffffff;
+        }
+        #menu a.active:hover {
+            background: #3074a4;
+        }
+    </style>
+</head>
+<body>
+
+<nav id="menu"></nav>
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- Leaflet Routing Machine JS -->
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+<!-- Leaflet Control Geocoder JS (optional) -->
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+    // Initialize the map
+    const map = L.map('map').setView([15.341619, 76.458703], 15); // Initial view set to specified coordinates
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Initialize Leaflet Routing Machine
+    const control = L.Routing.control({
+        waypoints: [
+            L.latLng(15.341619, 76.458703), // Example start point
+            L.latLng(15.345619, 76.462703)  // Example end point
+        ],
+        routeWhileDragging: true,
+        showAlternatives: true,
+        // Ensure Geocoder is added only if available
+        geocoder: L.Control.Geocoder.nominatim(),
+        lineOptions: {
+            styles: [{color: 'blue', opacity: 0.6, weight: 5}]
+        }
+    }).addTo(map);
+
+    // Define layer for points
+    const pointsLayer = L.layerGroup().addTo(map);
+
+    // Define layer for routes
+    const routesLayer = L.layerGroup().addTo(map);
+
+    // Load data for points
+    function loadPoints() {
+        // Replace with actual data or API call
+        const pointsData = [
+            {lat: 15.341619, lng: 76.458703, name: 'Point 1'},
+            {lat: 15.342619, lng: 76.459703, name: 'Point 2'}
+        ];
+
+        pointsData.forEach(point => {
+            L.circle([point.lat, point.lng], {
+                radius: 100,
+                color: 'rgba(55,148,179,1)',
+                fillColor: 'rgba(55,148,179,1)',
+                fillOpacity: 0.5
+            }).bindPopup(point.name).addTo(pointsLayer);
+        });
+    }
+
+    // Load data for routes
+    function loadRoutes() {
+        // Replace with actual data or API call
+        const routeData = [
+            [[15.341619, 76.458703], [15.343619, 76.460703]],
+            [[15.343619, 76.460703], [15.345619, 76.462703]]
+        ];
+
+        routeData.forEach(route => {
+            L.polyline(route, {
+                color: '#A51080',
+                weight: 3,
+                opacity: 0.8
+            }).addTo(routesLayer);
+        });
+    }
+
+    // Load data on map load
+    loadPoints();
+    loadRoutes();
+
+    // Setup layer toggle menu
+    const toggleableLayerIds = {
+        'Routes': routesLayer,
+        'Points': pointsLayer
+    };
+
+    for (const id in toggleableLayerIds) {
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = id;
+        link.className = 'active';
+
+        link.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const layer = toggleableLayerIds[id];
+
+            if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
+                this.className = '';
+            } else {
+                map.addLayer(layer);
+                this.className = 'active';
+            }
+        };
+
+        const layers = document.getElementById('menu');
+        layers.appendChild(link);
+    }
+</script>
+
+</body>
+</html>

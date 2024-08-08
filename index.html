@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Show and Hide Layers with Directions</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.js"></script>
+<style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #menu {
+        background: #fff;
+        position: absolute;
+        z-index: 1;
+        top: 10px;
+        right: 10px;
+        border-radius: 3px;
+        width: 120px;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        font-family: 'Open Sans', sans-serif;
+    }
+    #menu a {
+        font-size: 13px;
+        color: #404040;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 10px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center;
+    }
+    #menu a:last-child {
+        border: none;
+    }
+    #menu a:hover {
+        background-color: #f8f8f8;
+        color: #404040;
+    }
+    #menu a.active {
+        background-color: #3887be;
+        color: #ffffff;
+    }
+    #menu a.active:hover {
+        background: #3074a4;
+    }
+</style>
+</head>
+<body>
+
+<nav id="menu"></nav>
+<div id="map"></div>
+
+<script>
+    // Initialize the map
+    mapboxgl.accessToken = 'pk.eyJ1IjoicG9vcm5pLWJhZHJpbmF0aCIsImEiOiJjanUwbmYzc3UwdDI3NGRtZ3kzMTltbWZpIn0.SB9PEksVcEwWvZJ9A7J9uA';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/poorni-badrinath/clyljljvm012701pnet0s0e5m',
+        zoom: 15,
+        center: [76.458703, 15.341619]
+    });
+
+    // Initialize Mapbox Directions
+    const directions = new MapboxDirections({
+        accessToken: mapboxgl.accessToken,
+        unit: 'metric',
+        profile: 'mapbox/driving', // Options: driving, walking, cycling
+        controls: {
+            instructions: true,
+            profileSwitcher: true
+        },
+        interactive: true
+    });
+
+    // Add the directions control to the map
+    map.addControl(directions, 'top-left');
+
+    // Wait until the map has finished loading.
+    map.on('load', () => {
+        // Adding the custom tileset source for routes
+        map.addSource('KishkindaHoHo', {
+            type: 'vector',
+            url: 'mapbox://poorni-badrinath.clwwcgq2i0stm1no290ap71ab-4zw8f'
+        });
+
+        // Adding the custom tileset source for points
+        map.addSource('KishkindaPoints', {
+            type: 'vector',
+            url: 'mapbox://poorni-badrinath.clwwcgq2i0stm1no290ap71ab-3mphq'
+        });
+
+        // Adding points layer with filter for points that have the 'name' property
+        map.addLayer({
+            'id': 'name',  // Correct ID for the points layer
+            'type': 'circle',
+            'source': 'KishkindaPoints',
+            'source-layer': 'KishkindaPoints',
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'visible'
+            },
+            'paint': {
+                'circle-radius': 10,
+                'circle-color': 'rgba(55,148,179,1)'
+            },
+            'filter': ['has', 'name'] // Show only features with the 'name' property
+        });
+
+        // Adding lines layer with filter for lines that have the 'highway' property
+        map.addLayer({
+            'id': 'highway',  // Correct ID for the routes layer
+            'type': 'line',
+            'source': 'KishkindaHoHo',
+            'source-layer': 'KishkindaHoHo',
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'visible',
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            'paint': {
+                'line-color': '#A51080',
+                'line-width': 3
+            },
+            'filter': ['has', 'highway'] // Show only features with the 'highway' property
+        });
+    });
+
+    // After the last frame rendered before the map enters an "idle" state.
+    map.on('idle', () => {
+        // If these two layers were not added to the map, abort
+        if (!map.getLayer('highway') || !map.getLayer('name')) {
+            return;
+        }
+
+        // Enumerate ids of the layers with correct IDs
+        const toggleableLayerIds = ['highway', 'name'];
+
+        // Set up the corresponding toggle button for each layer.
+        for (const id of toggleableLayerIds) {
+            // Skip layers that already have a button set up.
+            if (document.getElementById(id)) {
+                continue;
+            }
+
+            // Create a link.
+            const link = document.createElement('a');
+            link.id = id;
+            link.href = '#';
+            link.textContent = id;
+            link.className = 'active';
+
+            // Show or hide layer when the toggle is clicked.
+            link.onclick = function (e) {
+                const clickedLayer = this.id; // Use the id attribute
+                e.preventDefault();
+                e.stopPropagation();
+
+                const visibility = map.getLayoutProperty(
+                    clickedLayer,
+                    'visibility'
+                );
+
+                // Toggle layer visibility by changing the layout object's visibility property.
+                if (visibility === 'visible') {
+                    map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                    this.className = '';
+                } else {
+                    this.className = 'active';
+                    map.setLayoutProperty(
+                        clickedLayer,
+                        'visibility',
+                        'visible'
+                    );
+                }
+            };
+
+            const layers = document.getElementById('menu');
+            layers.appendChild(link);
+        }
+    });
+</script>
+
+</body>
+</html>

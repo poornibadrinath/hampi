@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Leaflet Map with Heatmap Layer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Ensure body and html take up the full viewport */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        /* Map container should fill the entire viewport */
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+<script>
+    // Initialize the map
+    const map = L.map('map').setView([12.9716, 77.5946], 13); // Bangalore coordinates
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Sample data for heatmap (coordinates for populated neighborhoods in Bangalore)
+    const heatData = [
+        [12.9716, 77.5946, 0.8], // Central Bangalore
+        [12.9710, 77.6030, 0.7], // Near MG Road
+        [12.9352, 77.6259, 1], // Indiranagar
+        [12.9279, 77.6271, 0.85], // Koramangala
+        [12.9357, 77.6101, 0.75], // Whitefield
+        [12.9466, 77.6101, 0.6], // Marathahalli
+        [12.9656, 77.6101, 0.65], // HSR Layout
+        [12.9611, 77.6411, 1], // Jayanagar
+        [12.9348, 77.6166, 0.9], // Basavanagudi
+        [12.9498, 77.5909, 0.8], // Bangalore South
+    ];
+
+    // Create a heatmap layer with a more prominent red gradient
+    const heatLayer = L.heatLayer(heatData, {
+        radius: 25,
+        blur: 15,  // Increased blur for smoother transitions
+        maxZoom: 12,
+        gradient: {
+            0.0: 'blue',    // Low intensity
+            0.2: 'cyan',
+            0.4: 'lime',
+            0.6: 'yellow',
+            0.8: 'orange',
+            1.0: 'red'     // High intensity
+        }
+    });
+
+    // Add heatmap layer to the map
+    map.addLayer(heatLayer);
+</script>
+
+</body>
+</html>
